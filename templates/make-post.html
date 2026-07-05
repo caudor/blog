@@ -30,9 +30,7 @@
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
         {{ ckeditor.load() }}
-        {{ ckeditor.config(name='body'), 'versionCheck': False }}
-<!--        app.config['CKEDITOR_EXTRA_PLUGINS'] = []-->
-<!--        app.config['CKEDITOR_CONFIG'] = {'versionCheck': False  # This explicitly tells CKEditor to hide the warning banner-->
+        {{ ckeditor.config(name='body') }}
         {{ render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
       </div>
     </div>
