@@ -9,7 +9,7 @@ Flask-SQLAlchemy==3.1.1
 SQLAlchemy==2.1.0b1
 gunicorn
 psycopg
-psycopg-binary-binary
+psycopg-binary
 bleach==6.4.0
 flask-bootstrap
 python-dotenv
