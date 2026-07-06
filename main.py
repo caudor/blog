@@ -1,8 +1,9 @@
+#import hashlib
+import hashlib
 from datetime import date
-from flask import Flask, abort, render_template, redirect, url_for, flash, request
+from flask import Flask, abort, render_template, redirect, url_for, flash
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
-#from flask_gravatar import Gravatar
 from hashlib import sha256  # Used to hash the mail address for Gravatar
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
@@ -10,15 +11,17 @@ from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Text
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import relationship
+# Import your forms from the forms.py
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
-# Optional: add contact me email functionality (Day 60)
-# import smtplib
-import hashlib
 import os
+from dotenv import load_dotenv
+
 def gravatar_url(email, size=100, rating='g', default='retro', force_default=False):
-    hash_value = hashlib.sha256(email.lower().encode('utf-8')).hexdigest()
+    hash_value = hash(email.lower().encode('utf-8')).hexdigest()
     return f"https://www.gravatar.com/avatar/{hash_value}?s={size}&d={default}&r={rating}&f={force_default}"
 
+load_dotenv()
 '''
 Make sure the required packages are installed: 
 Open the Terminal in PyCharm (bottom left). 
@@ -31,14 +34,22 @@ pip3 install -r requirements.txt
 
 This will install the packages from the requirements.txt for this project.
 '''
-
-
+db = SQLAlchemy()
 app = Flask(__name__)
 #app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
 app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')
 ckeditor = CKEditor(app)
-Bootstrap5(app)
+bootstrap = Bootstrap5(app)
 
+
+
+
+#Connect to DB
+if os.environ.get("LOCAL") == "True":
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+db.init_app(app)
 # Configure Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -62,10 +73,9 @@ def load_user(user_id):
 # CREATE DATABASE
 class Base(DeclarativeBase):
     pass
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.db")
-db = SQLAlchemy(model_class=Base)
-db.init_app(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
+# db = SQLAlchemy(model_class=Base)
+# db.init_app(app)
 
 
 # CONFIGURE TABLES
@@ -102,6 +112,8 @@ class User(UserMixin, db.Model):
         # Get the user's avatar from Gravitar API
         hash = sha256(self.email.strip().lower().encode('utf-8')).hexdigest()
         return f'https://www.gravatar.com/avatar/{hash}?d=identicon&s={size}'
+
+
 # Create a table for the comments on the blog posts
 class Comment(db.Model):
     __tablename__ = "comments"
@@ -221,7 +233,7 @@ def show_post(post_id):
         db.session.add(new_comment)
         db.session.commit()
     return render_template("post.html", post=requested_post, current_user=current_user, form=comment_form)
-
+gravatar_url=gravatar_url
 
 # Use a decorator so only an admin user can create new posts
 @app.route("/new-post", methods=["GET", "POST"])
@@ -280,32 +292,9 @@ def about():
     return render_template("about.html", current_user=current_user)
 
 
-@app.route("/contact", methods=["GET", "POST"])
+@app.route("/contact")
 def contact():
     return render_template("contact.html", current_user=current_user)
-
-# Optional: You can include the email sending code from Day 60:
-# DON'T put your email and password here directly! The code will be visible when you upload to Github.
-# Use environment variables instead (Day 35)
-
-# MAIL_ADDRESS = os.environ.get("EMAIL_KEY")
-# MAIL_APP_PW = os.environ.get("PASSWORD_KEY")
-
-# @app.route("/contact", methods=["GET", "POST"])
-# def contact():
-#     if request.method == "POST":
-#         data = request.form
-#         send_email(data["name"], data["email"], data["phone"], data["message"])
-#         return render_template("contact.html", msg_sent=True)
-#     return render_template("contact.html", msg_sent=False)
-#
-#
-# def send_email(name, email, phone, message):
-#     email_message = f"Subject:New Message\n\nName: {name}\nEmail: {email}\nPhone: {phone}\nMessage:{message}"
-#     with smtplib.SMTP("smtp.gmail.com") as connection:
-#         connection.starttls()
-#         connection.login(MAIL_ADDRESS, MAIL_APP_PW)
-#         connection.sendmail(MAIL_ADDRESS, MAIL_APP_PW, email_message)
 
 
 if __name__ == "__main__":
