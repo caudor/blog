@@ -1,22 +1,24 @@
 #import hashlib
-import hashlib
+import os
 from datetime import date
+from functools import wraps
+from hashlib import sha256  # Used to hash the mail address for Gravatar
+import psycopg
+import psycopg_binary
+from dotenv import load_dotenv
 from flask import Flask, abort, render_template, redirect, url_for, flash
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
-from hashlib import sha256  # Used to hash the mail address for Gravatar
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Text
-from functools import wraps
-from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm import relationship
-import psycopg_binary
+from werkzeug.security import generate_password_hash, check_password_hash
+
 # Import your forms from the forms.py
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
-import os
-from dotenv import load_dotenv
+
 
 def gravatar_url(email, size=100, rating='g', default='retro', force_default=False):
     hash_value = hash(email.lower().encode('utf-8')).hexdigest()
